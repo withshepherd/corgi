@@ -1,0 +1,32 @@
+# Source files
+lib/
+test/
+
+# Configuration files
+tsconfig.json
+tsconfig.browser.json
+tsconfig.node.json
+vitest.config.ts
+
+# Database files
+db/*.db
+db/*.db-shm
+db/*.db-wal
+db/*.sql
+db/*.gz
+db/*.br
+
+# Visual assets
+*.png
+*.jpg
+*.gif
+
+# Development tools
+.turbo
+.vscode
+node_modules/
+coverage/
+
+# Temporary files
+*.log
+*.tsbuildinfo

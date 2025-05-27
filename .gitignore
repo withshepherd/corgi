@@ -1,0 +1,6 @@
+# Ignore all .db or .sql files
+*.db
+*.sql
+
+# Ignore dist
+dist/*
