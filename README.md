@@ -24,49 +24,53 @@ npm install @cardog/corgi
 Corgi is designed for fully offline VIN decoding. It achieves this by bundling a customized, compressed SQLite database (`vpic.lite.db.gz`, approximately 40MB) derived from the NHTSA VPIC dataset.
 
 ### Node.js Environment
-*   When you call `await createDecoder()` without a `databasePath` option, Corgi automatically locates the bundled `vpic.lite.db.gz`.
-*   On the first run, this gzipped database is decompressed into a local cache directory at `~/.corgi-cache/vpic.lite.db`.
-*   Subsequent calls will use this cached, uncompressed database for faster initialization.
-*   If you need to force a re-decompress (e.g., if the cache is corrupted or after a package update that changes the bundled DB), you can use the `forceFresh: true` option: `await createDecoder({ forceFresh: true });`
-*   If you prefer to manage your own uncompressed SQLite database file, you can provide its path using the `databasePath` option: `await createDecoder({ databasePath: "/path/to/your/vpic.lite.db" });`
+
+- When you call `await createDecoder()` without a `databasePath` option, Corgi automatically locates the bundled `vpic.lite.db.gz`.
+- On the first run, this gzipped database is decompressed into a local cache directory at `~/.corgi-cache/vpic.lite.db`.
+- Subsequent calls will use this cached, uncompressed database for faster initialization.
+- If you need to force a re-decompress (e.g., if the cache is corrupted or after a package update that changes the bundled DB), you can use the `forceFresh: true` option: `await createDecoder({ forceFresh: true });`
+- If you prefer to manage your own uncompressed SQLite database file, you can provide its path using the `databasePath` option: `await createDecoder({ databasePath: "/path/to/your/vpic.lite.db" });`
 
 ### Browser Environment
-*   In the browser, you **must** provide a `databasePath` option, which should be a URL pointing to where you are hosting the database file.
-*   **Recommended Method:** Host the compressed `vpic.lite.db.gz` file (found in the `dist/db/` directory of the installed `@cardog/corgi` package or from the [GitHub repository](https://github.com/crdg/corgi)). Configure your web server to serve this `.gz` file with the `Content-Encoding: gzip` HTTP header. The browser will then handle decompression automatically.
-    ```typescript
-    // Browser (uses sql.js, server handles gzip decompression)
-    const browserDecoder = await createDecoder({
-      databasePath: "https://your-cdn.com/assets/vpic.lite.db.gz", // Path to your gzipped DB
-      runtime: "browser",
-    });
-    ```
-*   **Alternative Method:** Host an uncompressed `vpic.lite.db` file. You would need to decompress the `vpic.lite.db.gz` file yourself first.
-    ```typescript
-    // Browser (uses sql.js, serving an uncompressed DB)
-    const browserDecoder = await createDecoder({
-      databasePath: "/assets/vpic.lite.db", // Path to your uncompressed DB
-      runtime: "browser",
-    });
-    ```
-    To get an uncompressed database, you can:
-    1. Find `vpic.lite.db.gz` in `node_modules/@cardog/corgi/dist/db/`.
-    2. Manually decompress it using a tool like `gunzip`.
-    3. Place the resulting `vpic.lite.db` in your web server's public assets directory.
+
+- In the browser, you **must** provide a `databasePath` option, which should be a URL pointing to where you are hosting the database file.
+- **Recommended Method:** Host the compressed `vpic.lite.db.gz` file (found in the `dist/db/` directory of the installed `@cardog/corgi` package or from the [GitHub repository](https://github.com/cardog-ai/corgi)). Configure your web server to serve this `.gz` file with the `Content-Encoding: gzip` HTTP header. The browser will then handle decompression automatically.
+  ```typescript
+  // Browser (uses sql.js, server handles gzip decompression)
+  const browserDecoder = await createDecoder({
+    databasePath: "https://your-cdn.com/assets/vpic.lite.db.gz", // Path to your gzipped DB
+    runtime: "browser",
+  });
+  ```
+- **Alternative Method:** Host an uncompressed `vpic.lite.db` file. You would need to decompress the `vpic.lite.db.gz` file yourself first.
+  ```typescript
+  // Browser (uses sql.js, serving an uncompressed DB)
+  const browserDecoder = await createDecoder({
+    databasePath: "/assets/vpic.lite.db", // Path to your uncompressed DB
+    runtime: "browser",
+  });
+  ```
+  To get an uncompressed database, you can:
+  1. Find `vpic.lite.db.gz` in `node_modules/@cardog/corgi/dist/db/`.
+  2. Manually decompress it using a tool like `gunzip`.
+  3. Place the resulting `vpic.lite.db` in your web server's public assets directory.
 
 ### Cloudflare D1 Environment
-*   For Cloudflare Workers using D1, the database is managed by D1. Initialize the D1 adapter using `initD1Adapter(env.D1_DATABASE)`. The `databasePath` in `createDecoder` is then a placeholder and not used to load a file.
-    ```typescript
-    import { createDecoder, initD1Adapter } from "@cardog/corgi";
 
-    // In your worker setup (e.g., `fetch` handler or module scope)
-    // initD1Adapter(env.YOUR_D1_BINDING); // Replace env.YOUR_D1_BINDING with your actual D1 binding
+- For Cloudflare Workers using D1, the database is managed by D1. Initialize the D1 adapter using `initD1Adapter(env.D1_DATABASE)`. The `databasePath` in `createDecoder` is then a placeholder and not used to load a file.
 
-    // Then, when you need a decoder:
-    const d1Decoder = await createDecoder({
-      databasePath: "D1", // Path is ignored for D1 but still a required parameter
-      runtime: "cloudflare",
-    });
-    ```
+  ```typescript
+  import { createDecoder, initD1Adapter } from "@cardog/corgi";
+
+  // In your worker setup (e.g., `fetch` handler or module scope)
+  // initD1Adapter(env.YOUR_D1_BINDING); // Replace env.YOUR_D1_BINDING with your actual D1 binding
+
+  // Then, when you need a decoder:
+  const d1Decoder = await createDecoder({
+    databasePath: "D1", // Path is ignored for D1 but still a required parameter
+    runtime: "cloudflare",
+  });
+  ```
 
 ## Quick Start
 
@@ -309,14 +313,14 @@ for (const pattern of result.patterns || []) {
 
 Contributions are welcome! If you're looking to improve Corgi or add new features, here's a brief overview of how to get started:
 
-*   **Database:**
-    *   The source SQLite database (`db/vpic.db` - not included in repo, generated from NHTSA data) is processed by `db/optimize-db.sh` to create `db/vpic.lite.db`. This script slims down the database by removing unused tables and data.
-    *   The `scripts/prepare-db.js` script then compresses `db/vpic.lite.db` into `dist/db/vpic.lite.db.gz`, which is the file bundled with the npm package.
-*   **Development:**
-    *   After cloning the repository, install dependencies using your preferred package manager (e.g., `npm install` or `pnpm install`).
-    *   The library is written in TypeScript and uses `tsup` for building.
-*   **Tests:**
-    *   Run tests using `npm test` or `pnpm test`. Tests are written with `vitest`. Ensure any changes pass existing tests and add new tests for new functionality.
+- **Database:**
+  - The source SQLite database (`db/vpic.db` - not included in repo, generated from NHTSA data) is processed by `db/optimize-db.sh` to create `db/vpic.lite.db`. This script slims down the database by removing unused tables and data.
+  - The `scripts/prepare-db.js` script then compresses `db/vpic.lite.db` into `dist/db/vpic.lite.db.gz`, which is the file bundled with the npm package.
+- **Development:**
+  - After cloning the repository, install dependencies using your preferred package manager (e.g., `npm install` or `pnpm install`).
+  - The library is written in TypeScript and uses `tsup` for building.
+- **Tests:**
+  - Run tests using `npm test` or `pnpm test`. Tests are written with `vitest`. Ensure any changes pass existing tests and add new tests for new functionality.
 
 Please open an issue to discuss significant changes before submitting a pull request.
 
