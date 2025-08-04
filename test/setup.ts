@@ -1,5 +1,45 @@
-import { copyFileSync, existsSync } from 'fs';
+import { copyFileSync, existsSync, createWriteStream } from 'fs';
+import { createGunzip } from 'zlib';
+import { pipeline } from 'stream/promises';
 import path from 'path';
+
+// Database download setup
+const TEST_DB_URL = "https://corgi.cardog.io/test.db.gz";
+const TEST_DB_PATH = path.join(__dirname, "test.db");
+
+async function downloadTestDatabase() {
+  if (existsSync(TEST_DB_PATH)) {
+    console.log("Test database already exists, skipping download");
+    return;
+  }
+
+  console.log("Downloading test database from remote...");
+  
+  try {
+    const response = await fetch(TEST_DB_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to download test database: ${response.status}`);
+    }
+
+    const gunzip = createGunzip();
+    const fileStream = createWriteStream(TEST_DB_PATH);
+
+    // @ts-ignore - Node.js ReadableStream compatibility
+    await pipeline(
+      response.body,
+      gunzip,
+      fileStream
+    );
+
+    console.log("Test database downloaded and decompressed successfully");
+  } catch (error) {
+    console.error("Failed to download test database:", error);
+    throw error;
+  }
+}
+
+// Download database before tests (this runs immediately when setup.ts is imported)
+await downloadTestDatabase();
 
 // Different possible paths for sql-wasm.wasm file
 const possiblePaths = [

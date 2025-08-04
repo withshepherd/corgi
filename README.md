@@ -1,10 +1,20 @@
 # 🐕 Corgi VIN Decoder
 
-**The fastest and most lightweight open-source VIN decoding library on the planet.**
+<div align="center">
+  <img src="./corgi.png" alt="Corgi - Fast VIN Decoder" width="200" height="200">
+  <br>
+  <strong>The fastest and most lightweight open-source VIN decoding library on the planet.</strong>
+</div>
+
+<div align="center">
 
 [![npm version](https://badge.fury.io/js/%40cardog%2Fcorgi.svg)](https://badge.fury.io/js/%40cardog%2Fcorgi)
+[![npm downloads](https://img.shields.io/npm/dm/@cardog/corgi.svg)](https://www.npmjs.com/package/@cardog/corgi)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
+[![GitHub stars](https://img.shields.io/github/stars/cardog-ai/corgi.svg?style=social)](https://github.com/cardog-ai/corgi)
+
+</div>
 
 Corgi is a blazing-fast, fully offline VIN decoder built with TypeScript. Powered by an optimized VPIC database, it delivers comprehensive vehicle information with zero network dependencies and lightning-fast performance across Node.js, browsers, and Cloudflare Workers.
 

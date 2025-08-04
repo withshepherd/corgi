@@ -22,7 +22,7 @@ import {
 import { DatabaseAdapter } from "../lib/db/adapter";
 import path from "path";
 
-const TEST_DB_PATH = path.join(__dirname, "../db/vpic.lite.db");
+const TEST_DB_PATH = path.join(__dirname, "./test.db");
 
 // Known valid VINs with expected data for testing
 const VALID_TEST_CASES = [
