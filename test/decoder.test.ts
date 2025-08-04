@@ -19,6 +19,7 @@ import {
   beforeEach,
   afterEach,
 } from "vitest";
+import { DatabaseAdapter } from "../lib/db/adapter";
 import path from "path";
 
 const TEST_DB_PATH = path.join(__dirname, "../db/vpic.lite.db");
@@ -195,9 +196,13 @@ describe("VIN Decoder Library", () => {
       }
       expect(result).not.toBeNull();
       expect(result?.valid).toBe(true);
-      expect(result?.components.vehicle?.make).toBe(VALID_TEST_CASES[0].expected.make);
+      expect(result?.components.vehicle?.make).toBe(
+        VALID_TEST_CASES[0].expected.make
+      );
       // Add a check for a specific component to ensure data was actually read
-      expect(result?.components.modelYear?.year).toBe(VALID_TEST_CASES[0].expected.year);
+      expect(result?.components.modelYear?.year).toBe(
+        VALID_TEST_CASES[0].expected.year
+      );
     });
   });
 
@@ -376,7 +381,7 @@ describe("VIN Decoder Library", () => {
 
         expect(result.components.modelYear?.year).toBe(expected.year);
         expect(result.components.wmi?.make).toBe(expected.make);
-        
+
         // Skip bodyStyle check as it's dependent on database content
         // expect(result.components.vehicle?.bodyStyle).toBe(expected.bodyStyle);
 

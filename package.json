@@ -1,7 +1,7 @@
 {
   "name": "@cardog/corgi",
-  "version": "1.0.0",
-  "description": "A TypeScript library for decoding and validating Vehicle Identification Numbers (VINs) using a customized VPIC (Vehicle Product Information Catalog) database. Supports Node.js, browser, and Cloudflare environments with fully offline VIN decoding.",
+  "version": "1.1.0",
+  "description": "⚡ The fastest and most lightweight open-source VIN decoding library. Fully offline, TypeScript-first, with comprehensive NHTSA VPIC database integration for Node.js, browsers, and Cloudflare Workers.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -57,26 +57,37 @@
   },
   "keywords": [
     "vin",
-    "decoder",
+    "vin-decoder",
     "automotive",
+    "vehicle-identification",
     "nhtsa",
     "vpic",
-    "vehicle",
-    "identification",
-    "number",
-    "car",
-    "automobile",
-    "typescript",
+    "car-data",
+    "vehicle-data",
     "offline",
-    "validation",
-    "cloudflare",
+    "fast",
+    "lightweight",
+    "typescript",
+    "nodejs",
     "browser",
-    "nodejs"
+    "cloudflare",
+    "cloudflare-workers",
+    "sqlite",
+    "pattern-matching",
+    "validation",
+    "automotive-api",
+    "vehicle-lookup",
+    "vin-validation",
+    "performance"
   ],
-  "author": "crdg",
+  "author": {
+    "name": "Cardog Team",
+    "email": "hello@cardog.ai",
+    "url": "https://cardog.ai"
+  },
   "license": "ISC",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "peerDependencies": {
     "sql.js": "^1.8.0"

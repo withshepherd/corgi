@@ -1,6 +1,13 @@
-# Ignore all .db or .sql files
-*.db
-*.sql
+# Database files
+db/*.db
+db/*.db-shm
+db/*.db-wal
+db/*.sql
+db/*.gz
+db/*.br
+
+# Ignore test.db
+test.db
 
 # Ignore dist
 dist/*

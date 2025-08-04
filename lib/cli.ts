@@ -26,11 +26,7 @@ program
 program
   .command("decode <vin>")
   .description("Decode a Vehicle Identification Number (VIN)")
-  .option(
-    "-d, --database <path>",
-    "Path to the VPIC database file",
-    "./db/vpic.lite.db"
-  )
+  .option("-d, --database <path>", "Path to the VPIC database file")
   .option("-p, --patterns", "Include pattern matching details")
   .option("-r, --raw", "Include raw database records")
   .option("-f, --format <format>", "Output format (json, pretty)", "pretty")
@@ -50,9 +46,6 @@ program
         process.exit(1);
       }
 
-      // Resolve database path
-      const dbPath = path.resolve(options.database);
-
       // Configure decode options
       const decodeOptions: DecodeOptions = {
         includePatternDetails: options.patterns,
@@ -65,11 +58,9 @@ program
         decodeOptions.modelYear = options.year;
       }
 
-      logger.debug({ vin, dbPath, options: decodeOptions }, "Decoding VIN");
-
       // Create decoder
       const decoder = await createDecoder({
-        databasePath: dbPath,
+        forceFresh: true,
         defaultOptions: decodeOptions,
       });
 

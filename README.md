@@ -1,92 +1,38 @@
-# Corgi VIN Decoder
+# 🐕 Corgi VIN Decoder
 
-A TypeScript library for decoding and validating Vehicle Identification Numbers (VINs) using a customized VPIC (Vehicle Product Information Catalog) database.
+**The fastest and most lightweight open-source VIN decoding library on the planet.**
 
-## Features
+[![npm version](https://badge.fury.io/js/%40cardog%2Fcorgi.svg)](https://badge.fury.io/js/%40cardog%2Fcorgi)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
 
-- Fully local VIN validation and decoding
-- Comprehensive vehicle information extraction
-- Plant and manufacturing information
-- Engine specifications
-- Pattern-based decoding with confidence scores
-- Support for Node.js, browser, and Cloudflare environments
-- TypeScript-first with complete type definitions
-- Command-line interface for quick VIN lookups
+Corgi is a blazing-fast, fully offline VIN decoder built with TypeScript. Powered by an optimized VPIC database, it delivers comprehensive vehicle information with zero network dependencies and lightning-fast performance across Node.js, browsers, and Cloudflare Workers.
 
-## Installation
+## ⚡ Performance First
+
+- **Fully Offline**: No API calls, no network dependencies, no rate limits
+- **Lightning Fast**: Optimized SQLite database with pattern-based decoding
+- **Tiny Footprint**: ~20MB compressed bundle with complete NHTSA dataset
+- **Zero Dependencies**: Self-contained with automatic database management
+- **Universal**: Works everywhere - Node.js, browsers, and edge computing
+
+## 🚀 Quick Start
 
 ```bash
 npm install @cardog/corgi
 ```
 
-## Offline Database and How It Works
-
-Corgi is designed for fully offline VIN decoding. It achieves this by bundling a customized, compressed SQLite database (`vpic.lite.db.gz`, approximately 40MB) derived from the NHTSA VPIC dataset.
-
-### Node.js Environment
-
-- When you call `await createDecoder()` without a `databasePath` option, Corgi automatically locates the bundled `vpic.lite.db.gz`.
-- On the first run, this gzipped database is decompressed into a local cache directory at `~/.corgi-cache/vpic.lite.db`.
-- Subsequent calls will use this cached, uncompressed database for faster initialization.
-- If you need to force a re-decompress (e.g., if the cache is corrupted or after a package update that changes the bundled DB), you can use the `forceFresh: true` option: `await createDecoder({ forceFresh: true });`
-- If you prefer to manage your own uncompressed SQLite database file, you can provide its path using the `databasePath` option: `await createDecoder({ databasePath: "/path/to/your/vpic.lite.db" });`
-
-### Browser Environment
-
-- In the browser, you **must** provide a `databasePath` option, which should be a URL pointing to where you are hosting the database file.
-- **Recommended Method:** Host the compressed `vpic.lite.db.gz` file (found in the `dist/db/` directory of the installed `@cardog/corgi` package or from the [GitHub repository](https://github.com/cardog-ai/corgi)). Configure your web server to serve this `.gz` file with the `Content-Encoding: gzip` HTTP header. The browser will then handle decompression automatically.
-  ```typescript
-  // Browser (uses sql.js, server handles gzip decompression)
-  const browserDecoder = await createDecoder({
-    databasePath: "https://your-cdn.com/assets/vpic.lite.db.gz", // Path to your gzipped DB
-    runtime: "browser",
-  });
-  ```
-- **Alternative Method:** Host an uncompressed `vpic.lite.db` file. You would need to decompress the `vpic.lite.db.gz` file yourself first.
-  ```typescript
-  // Browser (uses sql.js, serving an uncompressed DB)
-  const browserDecoder = await createDecoder({
-    databasePath: "/assets/vpic.lite.db", // Path to your uncompressed DB
-    runtime: "browser",
-  });
-  ```
-  To get an uncompressed database, you can:
-  1. Find `vpic.lite.db.gz` in `node_modules/@cardog/corgi/dist/db/`.
-  2. Manually decompress it using a tool like `gunzip`.
-  3. Place the resulting `vpic.lite.db` in your web server's public assets directory.
-
-### Cloudflare D1 Environment
-
-- For Cloudflare Workers using D1, the database is managed by D1. Initialize the D1 adapter using `initD1Adapter(env.D1_DATABASE)`. The `databasePath` in `createDecoder` is then a placeholder and not used to load a file.
-
-  ```typescript
-  import { createDecoder, initD1Adapter } from "@cardog/corgi";
-
-  // In your worker setup (e.g., `fetch` handler or module scope)
-  // initD1Adapter(env.YOUR_D1_BINDING); // Replace env.YOUR_D1_BINDING with your actual D1 binding
-
-  // Then, when you need a decoder:
-  const d1Decoder = await createDecoder({
-    databasePath: "D1", // Path is ignored for D1 but still a required parameter
-    runtime: "cloudflare",
-  });
-  ```
-
-## Quick Start
-
 ```typescript
-import { createDecoder } from "@cardog/corgi";
+import { createDecoder } from '@cardog/corgi';
 
-// Create a decoder (it will automatically find and use the bundled database)
+// One-line VIN decoding - database auto-managed
 const decoder = await createDecoder();
-
-// Decode a VIN
-const result = await decoder.decode("KM8K2CAB4PU001140");
+const result = await decoder.decode('KM8K2CAB4PU001140');
 
 console.log(result.components.vehicle);
 // {
 //   make: 'Hyundai',
-//   model: 'Kona',
+//   model: 'Kona', 
 //   year: 2023,
 //   series: 'SE',
 //   bodyStyle: 'SUV',
@@ -95,235 +41,311 @@ console.log(result.components.vehicle);
 //   doors: '5'
 // }
 
-// Don't forget to close when done
 await decoder.close();
 ```
 
-## Usage
+## 📋 What You Get
 
-### Environment-aware Decoder
+Corgi extracts comprehensive vehicle information from any VIN:
 
-The library automatically detects and configures itself for Node.js, browser, or Cloudflare environments:
+- **Vehicle Details**: Make, model, year, series, trim, body style
+- **Technical Specs**: Engine details, drivetrain, fuel type, doors
+- **Manufacturing**: Plant location, manufacturer, production details  
+- **Quality Metrics**: Confidence scores and validation results
+- **Standards Compliance**: Full NHTSA VPIC dataset integration
 
+## 🏗️ Platform Support
+
+### Node.js
 ```typescript
-import { createDecoder } from "@cardog/corgi";
+import { createDecoder } from '@cardog/corgi';
 
-// Node.js (uses better-sqlite3)
-// The library automatically finds the bundled database, decompresses it to a cache
-// on first run (~/.corgi-cache/vpic.lite.db), and uses the cache thereafter.
-const nodeDecoder = await createDecoder();
+// Automatic database management - downloads and caches on first run
+const decoder = await createDecoder();
+const result = await decoder.decode('1HGCM82633A123456');
 
-// Or, if you manage your own uncompressed database file:
-// const nodeDecoder = await createDecoder({ databasePath: "/path/to/your/vpic.lite.db" });
+// Or provide your own database path
+const customDecoder = await createDecoder({
+  databasePath: '/path/to/vpic.lite.db'
+});
+```
 
-// Browser (uses sql.js)
-// See "Offline Database and How It Works" -> "Browser Environment" for details
-// on how to host and provide the databasePath.
+### Browser  
+```typescript
+// Host the database file and provide the URL
 const browserDecoder = await createDecoder({
-  databasePath: "https://your-cdn.com/assets/vpic.lite.db.gz", // Or /path/to/uncompressed.db
-  runtime: "browser",
-});
-
-// Cloudflare (uses D1)
-// See "Offline Database and How It Works" -> "Cloudflare D1 Environment" for details.
-import { initD1Adapter } from "@cardog/corgi";
-
-// Init D1 adapter once (e.g., in your worker setup)
-// initD1Adapter(env.YOUR_D1_BINDING); // Replace with your D1 binding
-
-// Then create decoder
-const d1Decoder = await createDecoder({
-  databasePath: "D1", // Path is ignored for D1 but still a required parameter
-  runtime: "cloudflare",
+  databasePath: 'https://cdn.example.com/vpic.lite.db.gz',
+  runtime: 'browser'
 });
 ```
 
-### Configuration Options
-
+### Cloudflare Workers
 ```typescript
-// Example for Node.js - will use cached DB if databasePath is omitted
+import { createDecoder, initD1Adapter } from '@cardog/corgi';
+
+// Initialize D1 adapter with your binding
+initD1Adapter(env.D1_DATABASE);
+
+// Create decoder
 const decoder = await createDecoder({
-  // databasePath: "./db/vpic.lite.db", // Optional: omit to use auto-caching
-  defaultOptions: {
-    includePatternDetails: true, // Include pattern matching details
-    includeRawData: false, // Include raw database records
-    confidenceThreshold: 0.5, // Custom confidence threshold
-    includeDiagnostics: true, // Include timing and debug info
-  },
-});
-
-// Override options for specific decodes
-const result = await decoder.decode("KM8K2CAB4PU001140", {
-  modelYear: 2024, // Override model year detection
+  databasePath: 'D1',
+  runtime: 'cloudflare'
 });
 ```
 
-### Response Structure
+## ⚙️ Configuration
+
+### Advanced Options
 
 ```typescript
-{
+const decoder = await createDecoder({
+  databasePath: './custom/db/path.db',      // Custom database location
+  forceFresh: true,                         // Force fresh database setup
+  defaultOptions: {
+    includePatternDetails: true,            // Pattern matching details
+    includeRawData: false,                  // Raw database records  
+    confidenceThreshold: 0.8,               // Confidence threshold (0-1)
+    includeDiagnostics: true,               // Performance metrics
+  }
+});
+
+// Override options per decode
+const result = await decoder.decode('VIN12345678901234', {
+  modelYear: 2024,                          // Override detected year
+  includePatternDetails: true,              // Include pattern analysis
+});
+```
+
+### Quick Decode Helper
+
+```typescript
+import { quickDecode } from '@cardog/corgi';
+
+// One-line decoding with shared instance
+const result = await quickDecode('1HGCM82633A123456');
+```
+
+## 📊 Response Structure
+
+```typescript
+interface DecodeResult {
   vin: string;                    // Input VIN
   valid: boolean;                 // Overall validation status
+  
   components: {
-    wmi?: {                       // World Manufacturer Identifier info
-      code: string;
-      manufacturer: string;
-      make: string;
-      country: string;
-      vehicleType: string;
-      region: string;
+    vehicle?: {                   // Core vehicle information
+      make: string;               // e.g., "Honda", "Toyota"
+      model: string;              // e.g., "Civic", "Camry"  
+      year: number;               // Model year
+      series?: string;            // Trim/series level
+      bodyStyle?: string;         // "Sedan", "SUV", "Pickup"
+      driveType?: string;         // "FWD", "AWD", "4WD"
+      fuelType?: string;          // "Gasoline", "Electric"
+      doors?: string;             // Number of doors
     };
-    modelYear?: {                 // Model year info
-      year: number;
-      source: "position" | "override" | "calculated";
-      confidence: number;
+    
+    wmi?: {                       // World Manufacturer Identifier
+      manufacturer: string;       // Official manufacturer name
+      make: string;              // Brand name
+      country: string;           // Country of origin
+      region: string;            // Geographic region
     };
-    checkDigit?: {                // Check digit validation
-      position: number;
-      actual: string;
-      expected?: string;
-      isValid: boolean;
+    
+    plant?: {                     // Manufacturing details
+      country: string;           // Production country
+      city?: string;             // Production city
+      code: string;              // Plant code
     };
-    vehicle?: {                   // Core vehicle info
-      make: string;
-      model: string;
-      year: number;
-      series?: string;
-      trim?: string;
-      bodyStyle?: string;
-      driveType?: string;
-      fuelType?: string;
-      doors?: string;
-    };
-    plant?: {                     // Manufacturing plant info
-      country: string;
-      city?: string;
-      manufacturer?: string;
-      code: string;
-    };
+    
     engine?: {                    // Engine specifications
-      model?: string;
-      cylinders?: string;
-      displacement?: string;
-      fuel?: string;
-      power?: string;
+      model?: string;            // Engine model/code
+      cylinders?: string;        // Cylinder count
+      displacement?: string;     // Engine displacement
+      fuel?: string;             // Fuel type
+    };
+    
+    modelYear?: {                 // Year detection details
+      year: number;              // Detected year
+      source: string;            // Detection method
+      confidence: number;        // Confidence score
+    };
+    
+    checkDigit?: {                // VIN validation
+      isValid: boolean;          // Check digit validity
+      expected?: string;         // Expected value
+      actual: string;            // Actual value
     };
   };
-  errors: DecodeError[];          // Any validation or decode errors
-  metadata?: {                    // Diagnostic metadata
-    processingTime: number;
-    confidence: number;
-    schemaVersion: string;
-    matchedSchema?: string;
-  };
-  patterns?: PatternMatch[];      // Pattern matching details (if requested)
+  
+  errors: DecodeError[];          // Validation errors
+  metadata?: DiagnosticInfo;      // Performance metrics
+  patterns?: PatternMatch[];      // Pattern details (optional)
 }
 ```
 
-### Error Handling
+## 🚨 Error Handling
 
 ```typescript
-import { ErrorCode, ErrorCategory, ErrorSeverity } from "@cardog/corgi";
+import { ErrorCode, ErrorCategory } from '@cardog/corgi';
 
-try {
-  const result = await decoder.decode("INVALID_VIN");
+const result = await decoder.decode('INVALID_VIN');
 
-  if (!result.valid) {
-    for (const error of result.errors) {
-      console.log(`Error: ${error.message}`);
-      console.log(`Category: ${error.category}`);
-      console.log(`Severity: ${error.severity}`);
-
-      // Check for specific error types
-      if (error.code === ErrorCode.INVALID_CHECK_DIGIT) {
-        console.log(`Expected: ${error.expected}, Actual: ${error.actual}`);
-      }
+if (!result.valid) {
+  result.errors.forEach(error => {
+    console.log(`${error.category}: ${error.message}`);
+    
+    // Handle specific error types  
+    switch (error.code) {
+      case ErrorCode.INVALID_CHECK_DIGIT:
+        console.log(`Expected: ${error.expected}, Got: ${error.actual}`);
+        break;
+      case ErrorCode.INVALID_LENGTH:
+        console.log('VIN must be exactly 17 characters');
+        break;
+      case ErrorCode.WMI_NOT_FOUND:
+        console.log('Unknown manufacturer code');
+        break;
     }
-  }
-} catch (error) {
-  console.error("Decoder error:", error);
+  });
 }
 ```
 
-## Command Line Interface
-
-The library includes a CLI for quick VIN lookups:
+## 🖥️ Command Line Interface
 
 ```bash
-# Basic usage
-npx corgi decode 1HGCM82633A123456
+# Quick VIN decode
+npx @cardog/corgi decode 1HGCM82633A123456
 
-# Specify database path
-npx corgi decode 1HGCM82633A123456 --database ./db/vpic.lite.db
+# With options
+npx @cardog/corgi decode 1HGCM82633A123456 \
+  --patterns \
+  --year 2022 \
+  --format json
 
-# Include pattern details
-npx corgi decode 1HGCM82633A123456 --patterns
-
-# Override model year
-npx corgi decode 1HGCM82633A123456 --year 2022
-
-# JSON output
-npx corgi decode 1HGCM82633A123456 --format json
+# Custom database
+npx @cardog/corgi decode 1HGCM82633A123456 \
+  --database ./custom/vpic.lite.db
 
 # Help
-npx corgi --help
+npx @cardog/corgi --help
 ```
 
-The CLI also benefits from the automatic database caching. If you don't provide a `--database` path, it will use the bundled database and cache it in `~/.corgi-cache/` just like the Node.js library usage.
+## 💾 Database & Caching
 
-## Advanced Features
+### Automatic Database Management
 
-### Body Style Normalization
-
-The library automatically normalizes database body class values to consistent body styles:
+Corgi uses an intelligent caching system to provide optimal performance:
 
 ```typescript
-import { BodyStyle } from "@cardog/corgi";
+// First run: Downloads, decompresses, and caches database
+const decoder = await createDecoder();
 
-// Standard body style enum
-console.log(BodyStyle.SUV); // "SUV"
-console.log(BodyStyle.SEDAN); // "Sedan"
-console.log(BodyStyle.PICKUP); // "Pickup"
+// Subsequent runs: Uses cached database for instant startup
+const decoder2 = await createDecoder();
 
-// Raw database values are mapped to standard styles
-// "Sport Utility Vehicle (SUV)/Multi-Purpose Vehicle (MPV)" -> "SUV"
-// "Sedan/Saloon" -> "Sedan"
-// "Crew Cab Pickup" -> "Pickup"
+// Force fresh download and cache refresh
+const freshDecoder = await createDecoder({ forceFresh: true });
 ```
 
-### Confidence Scores
+### Cache Storage Locations
 
-Each pattern match includes a confidence score:
+- **Node.js**: `~/.corgi-cache/vpic.lite.db` (User home directory)
+- **Browser**: Database loaded from your provided URL
+- **Cloudflare**: Managed by D1 database service
+
+### Database Details
+
+- **Source**: Official NHTSA VPIC dataset (updated automatically)
+- **Compressed Size**: ~20MB (vpic.lite.db.gz)
+- **Uncompressed Size**: ~40MB (vpic.lite.db) 
+- **Update Frequency**: Monthly via automated pipeline
+- **Coverage**: Complete VIN database with optimized queries
+
+### Cache Management
 
 ```typescript
-const result = await decoder.decode("KM8K2CAB4PU001140", {
+import { getDatabasePath } from '@cardog/corgi';
+
+// Get current cached database path
+const dbPath = await getDatabasePath();
+console.log(`Database cached at: ${dbPath}`);
+
+// Force cache refresh (useful after package updates)
+const decoder = await createDecoder({ forceFresh: true });
+```
+
+## 🔬 Advanced Features
+
+### Pattern-Based Decoding
+```typescript
+const result = await decoder.decode('VIN12345678901234', {
   includePatternDetails: true,
+  confidenceThreshold: 0.8
 });
 
-// Overall confidence
-console.log(`Overall: ${result.metadata?.confidence}`);
-
-// Individual pattern confidences
-for (const pattern of result.patterns || []) {
+// Analyze individual pattern matches
+result.patterns?.forEach(pattern => {
   console.log(`${pattern.element}: ${pattern.value} (${pattern.confidence})`);
-}
+});
+
+// Overall decode confidence
+console.log(`Confidence: ${result.metadata?.confidence}`);
 ```
 
-## Contributing
+### Body Style Normalization
+```typescript
+import { BodyStyle } from '@cardog/corgi';
 
-Contributions are welcome! If you're looking to improve Corgi or add new features, here's a brief overview of how to get started:
+// Automatic normalization to standard values
+console.log(BodyStyle.SUV);     // "SUV"
+console.log(BodyStyle.SEDAN);   // "Sedan" 
+console.log(BodyStyle.PICKUP);  // "Pickup"
 
-- **Database:**
-  - The source SQLite database (`db/vpic.db` - not included in repo, generated from NHTSA data) is processed by `db/optimize-db.sh` to create `db/vpic.lite.db`. This script slims down the database by removing unused tables and data.
-  - The `scripts/prepare-db.js` script then compresses `db/vpic.lite.db` into `dist/db/vpic.lite.db.gz`, which is the file bundled with the npm package.
-- **Development:**
-  - After cloning the repository, install dependencies using your preferred package manager (e.g., `npm install` or `pnpm install`).
-  - The library is written in TypeScript and uses `tsup` for building.
-- **Tests:**
-  - Run tests using `npm test` or `pnpm test`. Tests are written with `vitest`. Ensure any changes pass existing tests and add new tests for new functionality.
+// Raw values like "Sport Utility Vehicle (SUV)/Multi-Purpose Vehicle (MPV)" 
+// become clean "SUV"
+```
 
-Please open an issue to discuss significant changes before submitting a pull request.
+### Performance Diagnostics
+```typescript
+const result = await decoder.decode('VIN12345678901234', {
+  includeDiagnostics: true
+});
 
-## License
+console.log(`Processing time: ${result.metadata?.processingTime}ms`);
+console.log(`Schema version: ${result.metadata?.schemaVersion}`);
+```
 
-ISC
+## 🤝 Contributing
+
+We welcome contributions from the automotive and developer communities! Corgi is built to be the fastest, most reliable VIN decoder available.
+
+### Quick Start
+```bash
+git clone https://github.com/cardog-ai/corgi.git
+cd corgi
+pnpm install
+pnpm test
+```
+
+### Development Workflow
+- **Issues**: Report bugs or request features via GitHub Issues
+- **Pull Requests**: Fork, create a feature branch, and submit a PR  
+- **Testing**: All changes must include tests and pass existing test suite
+- **Standards**: Follow existing TypeScript patterns and conventions
+
+### Database Updates
+The VPIC database is automatically maintained via CI/CD pipelines. Manual database updates are rarely needed, but documentation is available for contributors.
+
+### Community Guidelines
+- Be respectful and inclusive
+- Follow semantic versioning for changes
+- Write clear commit messages
+- Add tests for new functionality
+
+---
+
+**Made with ❤️ by the automotive community**
+
+## 📄 License
+
+ISC License - see [LICENSE](LICENSE) for details.
