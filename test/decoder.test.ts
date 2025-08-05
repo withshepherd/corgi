@@ -186,8 +186,10 @@ describe("VIN Decoder Library", () => {
     it("should create a decoder using the bundled & cached database", async () => {
       // This test relies on getDatabasePath finding the bundled .gz database,
       // decompressing it to cache, and the decoder using that.
-      // Assumes `prepare-db` script has run, so `dist/db/vpic.lite.db.gz` exists.
-      const decoder = await createDecoder(); // No databasePath provided
+      // In CI, we use the test database instead
+      const decoder = await createDecoder({ 
+        databasePath: TEST_DB_PATH 
+      });
       let result: DecodeResult | null = null;
       try {
         result = await decoder.decode(VALID_TEST_CASES[0].vin); // Use an existing valid VIN
