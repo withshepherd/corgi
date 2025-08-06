@@ -36,11 +36,48 @@ const DIRNAME = getDirname();
 // Path constants
 const CACHE_DIR = join(homedir(), ".corgi-cache");
 const CACHE_DB_PATH = join(CACHE_DIR, "vpic.lite.db");
-const PACKAGE_DIR = DIRNAME; // Effectively packages/corgi/lib/db
-const COMPRESSED_DB_PATH = join(DIRNAME, "..", "..", "dist", "db", "vpic.lite.db.gz");
-const UNCOMPRESSED_DB_PATHS = [
-  join(DIRNAME, "..", "..", "db", "vpic.lite.db"), // For local dev: packages/corgi/db/vpic.lite.db
-];
+
+/**
+ * Get potential paths for the compressed database in order of preference
+ */
+function getCompressedDbPaths(): string[] {
+  const paths: string[] = [];
+
+  // In development: packages/corgi/lib/db -> packages/corgi/dist/db/vpic.lite.db.gz
+  paths.push(join(DIRNAME, "..", "..", "dist", "db", "vpic.lite.db.gz"));
+
+  // In built package: dist/db -> dist/db/vpic.lite.db.gz (same directory)
+  paths.push(join(DIRNAME, "vpic.lite.db.gz"));
+
+  // In built package: dist/* -> dist/db/vpic.lite.db.gz (sibling directory)
+  paths.push(join(DIRNAME, "..", "db", "vpic.lite.db.gz"));
+
+  // In installed package: node_modules/@cardog/corgi/dist/db/vpic.lite.db.gz
+  paths.push(join(DIRNAME, "db", "vpic.lite.db.gz"));
+
+  // Alternative: if DIRNAME is the package root
+  paths.push(join(DIRNAME, "dist", "db", "vpic.lite.db.gz"));
+
+  return paths;
+}
+
+/**
+ * Get potential paths for uncompressed databases in order of preference
+ */
+function getUncompressedDbPaths(): string[] {
+  const paths: string[] = [];
+
+  // For local dev: packages/corgi/db/vpic.lite.db
+  paths.push(join(DIRNAME, "..", "..", "db", "vpic.lite.db"));
+
+  // Alternative dev path
+  paths.push(join(DIRNAME, "..", "db", "vpic.lite.db"));
+
+  // Current working directory
+  paths.push(join(process.cwd(), "db", "vpic.lite.db"));
+
+  return paths;
+}
 
 /**
  * Gets the path to the database, handling decompression if needed
@@ -64,13 +101,13 @@ export async function getDatabasePath(
   }
 
   try {
+    const compressedPaths = getCompressedDbPaths();
+    const uncompressedPaths = getUncompressedDbPaths();
+
     logger.debug(
       {
         CACHE_DIR,
         CACHE_DB_PATH,
-        PACKAGE_DIR,
-        UNCOMPRESSED_DB_PATHS,
-        COMPRESSED_DB_PATH,
       },
       "Database paths being checked"
     );
@@ -89,8 +126,7 @@ export async function getDatabasePath(
 
     // First check if we have an uncompressed version to copy
     logger.debug("Checking for uncompressed database files...");
-    for (const dbPath of UNCOMPRESSED_DB_PATHS) {
-      logger.debug({ dbPath, exists: existsSync(dbPath) }, "Checking path");
+    for (const dbPath of uncompressedPaths) {
       if (existsSync(dbPath)) {
         logger.debug(
           { from: dbPath, to: CACHE_DB_PATH },
@@ -101,41 +137,17 @@ export async function getDatabasePath(
       }
     }
 
-    // Log current working directory
-    logger.debug({ cwd: process.cwd() }, "Current working directory");
-    // ls current directory
-    logger.debug(
-      { files: readdirSync(process.cwd()) },
-      "Current directory files"
-    );
-
     // Check if we have a compressed version
-    logger.debug(
-      { path: COMPRESSED_DB_PATH, exists: existsSync(COMPRESSED_DB_PATH) },
-      "Checking compressed database"
-    );
-    if (existsSync(COMPRESSED_DB_PATH)) {
-      logger.debug(
-        { from: COMPRESSED_DB_PATH, to: CACHE_DB_PATH },
-        "Decompressing database to cache"
-      );
-      await decompressDatabase(COMPRESSED_DB_PATH, CACHE_DB_PATH);
-      return CACHE_DB_PATH;
-    }
-
-    // Last resort - try database in the current directory
-    const cwdDbPath = join(process.cwd(), "db", "vpic.lite.db");
-    logger.debug(
-      { path: cwdDbPath, exists: existsSync(cwdDbPath) },
-      "Checking database in current directory"
-    );
-    if (existsSync(cwdDbPath)) {
-      logger.debug(
-        { from: cwdDbPath, to: CACHE_DB_PATH },
-        "Copying database from current directory"
-      );
-      await copyFile(cwdDbPath, CACHE_DB_PATH);
-      return CACHE_DB_PATH;
+    logger.debug("Checking for compressed database files...");
+    for (const compressedPath of compressedPaths) {
+      if (existsSync(compressedPath)) {
+        logger.debug(
+          { from: compressedPath, to: CACHE_DB_PATH },
+          "Decompressing database to cache"
+        );
+        await decompressDatabase(compressedPath, CACHE_DB_PATH);
+        return CACHE_DB_PATH;
+      }
     }
 
     // If we get here, we couldn't find any database file
