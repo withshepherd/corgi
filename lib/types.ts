@@ -17,6 +17,8 @@ export enum BodyStyle {
   MINIVAN = "Minivan",
   PICKUP = "Pickup",
   TRUCK = "Truck",
+  TRACTOR = "Tractor",
+  TRAILER = "Trailer",
   BUS = "Bus",
   MOTORCYCLE = "Motorcycle",
   OTHER = "Other"
@@ -58,14 +60,15 @@ export const BODY_STYLE_MAP: Record<string, BodyStyle> = {
   "Minivan": BodyStyle.MINIVAN,
   "Passenger Van": BodyStyle.VAN,
   
-  // Trucks and pickups
+  // Trucks, pickups, and trailers
   "Pickup": BodyStyle.PICKUP,
   "Pickup Truck": BodyStyle.PICKUP,
   "Truck": BodyStyle.TRUCK,
   "Standard Pickup Truck": BodyStyle.PICKUP,
   "Extended Cab Pickup": BodyStyle.PICKUP,
   "Crew Cab Pickup": BodyStyle.PICKUP,
-  
+  "Trailer": BodyStyle.TRAILER,
+  "Tractor": BodyStyle.TRACTOR,
   // Bus
   "Bus": BodyStyle.BUS,
   "School Bus": BodyStyle.BUS,
