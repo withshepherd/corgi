@@ -42,7 +42,7 @@ const result = await decoder.decode('KM8K2CAB4PU001140');
 console.log(result.components.vehicle);
 // {
 //   make: 'Hyundai',
-//   model: 'Kona', 
+//   model: 'Kona',
 //   year: 2023,
 //   series: 'SE',
 //   bodyStyle: 'SUV',
@@ -60,7 +60,7 @@ Corgi extracts comprehensive vehicle information from any VIN:
 
 - **Vehicle Details**: Make, model, year, series, trim, body style
 - **Technical Specs**: Engine details, drivetrain, fuel type, doors
-- **Manufacturing**: Plant location, manufacturer, production details  
+- **Manufacturing**: Plant location, manufacturer, production details
 - **Quality Metrics**: Confidence scores and validation results
 - **Standards Compliance**: Full NHTSA VPIC dataset integration
 
@@ -80,7 +80,7 @@ const customDecoder = await createDecoder({
 });
 ```
 
-### Browser  
+### Browser
 ```typescript
 // Host the database file and provide the URL
 const browserDecoder = await createDecoder({
@@ -113,7 +113,7 @@ const decoder = await createDecoder({
   forceFresh: true,                         // Force fresh database setup
   defaultOptions: {
     includePatternDetails: true,            // Pattern matching details
-    includeRawData: false,                  // Raw database records  
+    includeRawData: false,                  // Raw database records
     confidenceThreshold: 0.8,               // Confidence threshold (0-1)
     includeDiagnostics: true,               // Performance metrics
   }
@@ -141,11 +141,11 @@ const result = await quickDecode('1HGCM82633A123456');
 interface DecodeResult {
   vin: string;                    // Input VIN
   valid: boolean;                 // Overall validation status
-  
+
   components: {
     vehicle?: {                   // Core vehicle information
       make: string;               // e.g., "Honda", "Toyota"
-      model: string;              // e.g., "Civic", "Camry"  
+      model: string;              // e.g., "Civic", "Camry"
       year: number;               // Model year
       series?: string;            // Trim/series level
       bodyStyle?: string;         // "Sedan", "SUV", "Pickup"
@@ -153,40 +153,40 @@ interface DecodeResult {
       fuelType?: string;          // "Gasoline", "Electric"
       doors?: string;             // Number of doors
     };
-    
+
     wmi?: {                       // World Manufacturer Identifier
       manufacturer: string;       // Official manufacturer name
       make: string;              // Brand name
       country: string;           // Country of origin
       region: string;            // Geographic region
     };
-    
+
     plant?: {                     // Manufacturing details
       country: string;           // Production country
       city?: string;             // Production city
       code: string;              // Plant code
     };
-    
+
     engine?: {                    // Engine specifications
       model?: string;            // Engine model/code
       cylinders?: string;        // Cylinder count
       displacement?: string;     // Engine displacement
       fuel?: string;             // Fuel type
     };
-    
+
     modelYear?: {                 // Year detection details
       year: number;              // Detected year
       source: string;            // Detection method
       confidence: number;        // Confidence score
     };
-    
+
     checkDigit?: {                // VIN validation
       isValid: boolean;          // Check digit validity
       expected?: string;         // Expected value
       actual: string;            // Actual value
     };
   };
-  
+
   errors: DecodeError[];          // Validation errors
   metadata?: DiagnosticInfo;      // Performance metrics
   patterns?: PatternMatch[];      // Pattern details (optional)
@@ -203,8 +203,8 @@ const result = await decoder.decode('INVALID_VIN');
 if (!result.valid) {
   result.errors.forEach(error => {
     console.log(`${error.category}: ${error.message}`);
-    
-    // Handle specific error types  
+
+    // Handle specific error types
     switch (error.code) {
       case ErrorCode.INVALID_CHECK_DIGIT:
         console.log(`Expected: ${error.expected}, Got: ${error.actual}`);
@@ -267,7 +267,7 @@ const freshDecoder = await createDecoder({ forceFresh: true });
 
 - **Source**: Official NHTSA VPIC dataset (updated automatically)
 - **Compressed Size**: ~20MB (vpic.lite.db.gz)
-- **Uncompressed Size**: ~40MB (vpic.lite.db) 
+- **Uncompressed Size**: ~40MB (vpic.lite.db)
 - **Update Frequency**: Monthly via automated pipeline
 - **Coverage**: Complete VIN database with optimized queries
 
@@ -308,10 +308,10 @@ import { BodyStyle } from '@cardog/corgi';
 
 // Automatic normalization to standard values
 console.log(BodyStyle.SUV);     // "SUV"
-console.log(BodyStyle.SEDAN);   // "Sedan" 
+console.log(BodyStyle.SEDAN);   // "Sedan"
 console.log(BodyStyle.PICKUP);  // "Pickup"
 
-// Raw values like "Sport Utility Vehicle (SUV)/Multi-Purpose Vehicle (MPV)" 
+// Raw values like "Sport Utility Vehicle (SUV)/Multi-Purpose Vehicle (MPV)"
 // become clean "SUV"
 ```
 
@@ -334,12 +334,13 @@ We welcome contributions from the automotive and developer communities! Corgi is
 git clone https://github.com/cardog-ai/corgi.git
 cd corgi
 pnpm install
+pnpm approve-builds
 pnpm test
 ```
 
 ### Development Workflow
 - **Issues**: Report bugs or request features via GitHub Issues
-- **Pull Requests**: Fork, create a feature branch, and submit a PR  
+- **Pull Requests**: Fork, create a feature branch, and submit a PR
 - **Testing**: All changes must include tests and pass existing test suite
 - **Standards**: Follow existing TypeScript patterns and conventions
 
