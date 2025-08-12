@@ -27,10 +27,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "pnpm"
 
-      - name: Install system dependencies for native modules
+      - name: Install build tools for native modules
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3 make g++
+          sudo apt-get install -y build-essential libsqlite3-dev python3
 
       - name: Install dependencies
         run: pnpm install
@@ -61,10 +61,10 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      - name: Install system dependencies for native modules
+      - name: Install build tools for native modules
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3 make g++
+          sudo apt-get install -y build-essential libsqlite3-dev python3
 
       - name: Install dependencies
         run: pnpm install
@@ -77,5 +77,5 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          fail_ci_if_error: false

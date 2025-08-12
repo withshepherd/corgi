@@ -1,0 +1,26 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 60%
+        threshold: 2%
+        base: auto
+    patch:
+      default:
+        target: 60%
+        threshold: 2%
+        base: auto
+
+comment:
+  layout: "reach,diff,flags,tree,reach"
+  behavior: default
+  require_changes: false
+
+ignore:
+  - "test/**/*"
+  - "scripts/**/*"
+  - "examples/**/*"
+  - "coverage/**/*"
+  - "dist/**/*"
+  - "*.config.*"
+  - "*.d.ts"
