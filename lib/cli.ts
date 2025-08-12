@@ -54,7 +54,8 @@ program
 
       // Create decoder
       const decoder = await createDecoder({
-        forceFresh: true,
+        databasePath: options.database,
+        // forceFresh: true,
         defaultOptions: decodeOptions,
       });
 

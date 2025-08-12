@@ -14,6 +14,8 @@ const LOOKUP_TABLES = [
   'Transmission',
   'BodyStyle',
   'GrossVehicleWeightRating',
+  'GrossVehicleWeightRatingTo',
+  'GrossVehicleWeightRatingFrom',
   'ChargerLevel',
   'ElectrificationLevel',
   'EVDriveUnit',
