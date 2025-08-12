@@ -1,8 +1,8 @@
-import { DatabaseAdapter } from "./db/adapter";
-import { VPICDatabase } from "./db";
-import { PatternMatcher } from "./pattern";
-import { createLogger } from "./logger";
-import { BODY_STYLE_MAP, BodyStyle } from "./types";
+import { DatabaseAdapter } from './db/adapter';
+import { VPICDatabase } from './db';
+import { PatternMatcher } from './pattern';
+import { createLogger } from './logger';
+import { BODY_STYLE_MAP, BodyStyle } from './types';
 import {
   WMIResult,
   ModelYearResult,
@@ -18,15 +18,14 @@ import {
   LookupError,
   PatternError,
   DatabaseError,
-  VINComponents,
   VehicleInfo,
   PlantInfo,
   EngineInfo,
   DecodeOptions,
-} from "./types";
+} from './types';
 
 // Create logger for the decoder
-const logger = createLogger("VINDecoder");
+const logger = createLogger('VINDecoder');
 
 /**
  * Helper function to decode a VIN using a provided database adapter
@@ -39,7 +38,7 @@ const logger = createLogger("VINDecoder");
 export async function decodeVIN(
   vin: string,
   adapter: DatabaseAdapter,
-  options: DecodeOptions = {}
+  options: DecodeOptions = {},
 ): Promise<DecodeResult> {
   const decoder = new VINDecoder(adapter);
   return decoder.decode(vin, options);
@@ -69,10 +68,7 @@ export class VINDecoder {
    * @param options - Optional configuration for the decoding process
    * @returns Decoded VIN information
    */
-  async decode(
-    vin: string,
-    options: DecodeOptions = {}
-  ): Promise<DecodeResult> {
+  async decode(vin: string, options: DecodeOptions = {}): Promise<DecodeResult> {
     // Record start time for processing
     const startTime = performance.now ? performance.now() : Date.now();
     const cleanVin = vin.toUpperCase().trim();
@@ -86,7 +82,7 @@ export class VINDecoder {
       metadata: {
         processingTime: 0,
         confidence: 0,
-        schemaVersion: "1.0",
+        schemaVersion: '1.0',
       },
     };
 
@@ -118,7 +114,7 @@ export class VINDecoder {
           code: ErrorCode.INVALID_CHECK_DIGIT,
           category: ErrorCategory.VALIDATION,
           severity: ErrorSeverity.WARNING, // Downgrade to warning, common problem in real-world VINs
-          message: "Invalid check digit",
+          message: 'Invalid check digit',
           positions: [8],
           expected: checkDigit.expected,
           actual: checkDigit.actual,
@@ -129,7 +125,7 @@ export class VINDecoder {
       const modelYear = options.modelYear
         ? {
             year: options.modelYear,
-            source: "override" as const,
+            source: 'override' as const,
             confidence: 1,
           }
         : this.determineModelYear(cleanVin);
@@ -139,7 +135,7 @@ export class VINDecoder {
           code: ErrorCode.INVALID_MODEL_YEAR,
           category: ErrorCategory.VALIDATION,
           severity: ErrorSeverity.ERROR,
-          message: "Could not determine model year",
+          message: 'Could not determine model year',
           positions: [9],
         } as ValidationError);
 
@@ -158,9 +154,9 @@ export class VINDecoder {
           code: ErrorCode.WMI_NOT_FOUND,
           category: ErrorCategory.LOOKUP,
           severity: ErrorSeverity.ERROR,
-          message: "WMI not found in database",
+          message: 'WMI not found in database',
           searchKey: wmi,
-          searchType: "WMI",
+          searchType: 'WMI',
         } as LookupError);
 
         result.metadata!.processingTime = Date.now() - startTime;
@@ -175,21 +171,12 @@ export class VINDecoder {
         const vis = cleanVin.substring(9, 17);
 
         // Get pattern matches for this VIN
-        const patterns = await this.patternMatcher.getPatternMatches(
-          wmi,
-          modelYear.year,
-          vds,
-          vis
-        );
+        const patterns = await this.patternMatcher.getPatternMatches(wmi, modelYear.year, vds, vis);
 
         if (patterns.length > 0) {
           // Split patterns into VDS and VIS components
-          const vdsPatterns = patterns.filter(
-            (p) => p.metadata?.patternType === "VDS"
-          );
-          const visPatterns = patterns.filter(
-            (p) => p.metadata?.patternType === "VIS"
-          );
+          const vdsPatterns = patterns.filter(p => p.metadata?.patternType === 'VDS');
+          const visPatterns = patterns.filter(p => p.metadata?.patternType === 'VIS');
 
           // Update components with VDS and VIS information
           if (vdsPatterns.length > 0) {
@@ -207,11 +194,7 @@ export class VINDecoder {
           }
 
           // Extract core vehicle information
-          result.components.vehicle = this.extractVehicleInfo(
-            patterns,
-            wmiInfo,
-            modelYear
-          );
+          result.components.vehicle = this.extractVehicleInfo(patterns, wmiInfo, modelYear);
 
           result.components.plant = this.extractPlantInfo(patterns, cleanVin);
           result.components.engine = this.extractEngineInfo(patterns);
@@ -223,8 +206,7 @@ export class VINDecoder {
 
           // Calculate overall confidence
           const avgConfidence =
-            patterns.reduce((sum, p) => sum + p.confidence, 0) /
-            patterns.length;
+            patterns.reduce((sum, p) => sum + p.confidence, 0) / patterns.length;
 
           result.metadata!.confidence = avgConfidence;
           result.metadata!.matchedSchema = this.findPrimarySchema(patterns);
@@ -235,7 +217,7 @@ export class VINDecoder {
               code: ErrorCode.LOW_CONFIDENCE_PATTERNS,
               category: ErrorCategory.PATTERN,
               severity: ErrorSeverity.WARNING,
-              message: "Low confidence in pattern matches",
+              message: 'Low confidence in pattern matches',
               confidence: avgConfidence,
             } as PatternError);
           }
@@ -244,7 +226,7 @@ export class VINDecoder {
             code: ErrorCode.NO_PATTERNS_FOUND,
             category: ErrorCategory.PATTERN,
             severity: ErrorSeverity.ERROR,
-            message: "No matching patterns found",
+            message: 'No matching patterns found',
           } as PatternError);
 
           result.metadata!.processingTime = Date.now() - startTime;
@@ -255,8 +237,8 @@ export class VINDecoder {
           code: ErrorCode.QUERY_ERROR,
           category: ErrorCategory.DATABASE,
           severity: ErrorSeverity.ERROR,
-          message: "Error matching patterns",
-          details: error instanceof Error ? error.message : "Unknown error",
+          message: 'Error matching patterns',
+          details: error instanceof Error ? error.message : 'Unknown error',
         } as DatabaseError);
 
         result.metadata!.processingTime = Date.now() - startTime;
@@ -266,18 +248,17 @@ export class VINDecoder {
       // 6. Set final validation status
       // A VIN is considered valid if it has no errors or only warnings
       result.valid =
-        result.errors.every(
-          (error) => error.severity === ErrorSeverity.WARNING
-        ) || result.errors.length === 0;
+        result.errors.every(error => error.severity === ErrorSeverity.WARNING) ||
+        result.errors.length === 0;
     } catch (error) {
-      logger.error({ vin, error }, "Decoder error");
+      logger.error({ vin, error }, 'Decoder error');
 
       result.errors.push({
         code: ErrorCode.QUERY_ERROR,
         category: ErrorCategory.DATABASE,
         severity: ErrorSeverity.ERROR,
-        message: "Unexpected error during decoding",
-        details: error instanceof Error ? error.message : "Unknown error",
+        message: 'Unexpected error during decoding',
+        details: error instanceof Error ? error.message : 'Unknown error',
       } as DatabaseError);
     }
 
@@ -297,7 +278,7 @@ export class VINDecoder {
    */
   private findPrimarySchema(patterns: PatternMatch[]): string | undefined {
     const modelPatterns = patterns
-      .filter((p) => p.element === "Model")
+      .filter(p => p.element === 'Model')
       .sort((a, b) => b.confidence - a.confidence);
 
     return modelPatterns[0]?.schema;
@@ -314,6 +295,7 @@ export class VINDecoder {
     if (bodyStyle in BODY_STYLE_MAP) {
       return BODY_STYLE_MAP[bodyStyle];
     }
+    console.log('bodyStyle', bodyStyle);
 
     // Fuzzy match based on substring
     for (const [key, value] of Object.entries(BODY_STYLE_MAP)) {
@@ -327,7 +309,7 @@ export class VINDecoder {
 
     // Handle common keywords
     const lowerBody = bodyStyle.toLowerCase();
-    if (lowerBody.includes("pickup") || lowerBody.includes("truck")) {
+    if (lowerBody.includes('pickup') || lowerBody.includes('truck')) {
       return BodyStyle.PICKUP;
     }
 
@@ -346,18 +328,18 @@ export class VINDecoder {
   private extractVehicleInfo(
     patterns: PatternMatch[],
     wmiInfo: WMIResult,
-    modelYear: ModelYearResult
+    modelYear: ModelYearResult,
   ): VehicleInfo {
     const info: VehicleInfo = {
-      make: wmiInfo.make || "",
-      model: "",
+      make: wmiInfo.make || '',
+      model: '',
       year: modelYear.year,
       manufacturer: wmiInfo.manufacturer,
     };
 
     // First, sort model patterns by elementWeight (if available)
     const modelPatterns = patterns
-      .filter((p) => p.element === "Model" && p.value)
+      .filter(p => p.element === 'Model' && p.value)
       .sort((a, b) => {
         // Use elementWeight if available (higher weight first)
         const weightA = a.metadata?.elementWeight ?? 0;
@@ -379,35 +361,35 @@ export class VINDecoder {
       if (!pattern.value) continue;
 
       switch (pattern.element) {
-        case "Make":
+        case 'Make':
           info.make = pattern.value;
           break;
         // Skip "Model" as we've already handled it
-        case "Series":
+        case 'Series':
           info.series = pattern.value;
           break;
-        case "Trim":
-        case "Trim Level":
+        case 'Trim':
+        case 'Trim Level':
           info.trim = pattern.value;
           break;
-        case "Body Class":
-        case "Body Style":
+        case 'Body Class':
+        case 'Body Style':
           info.bodyStyle = this.coerceBodyStyle(pattern.value);
           break;
-        case "Drive Type":
+        case 'Drive Type':
           info.driveType = pattern.value;
           break;
-        case "Fuel Type - Primary":
+        case 'Fuel Type - Primary':
           info.fuelType = pattern.value;
           break;
-        case "Fuel Type - Secondary":
+        case 'Fuel Type - Secondary':
           // Assume hybrid if secondary fuel type is present
-          info.fuelType = "Hybrid";
+          info.fuelType = 'Hybrid';
           break;
-        case "Transmission":
+        case 'Transmission':
           info.transmission = pattern.value;
           break;
-        case "Doors":
+        case 'Doors':
           info.doors = pattern.value;
           break;
       }
@@ -423,10 +405,7 @@ export class VINDecoder {
    * @param vin - Complete VIN string
    * @returns Plant information or undefined
    */
-  private extractPlantInfo(
-    patterns: PatternMatch[],
-    vin: string
-  ): PlantInfo | undefined {
+  private extractPlantInfo(patterns: PatternMatch[], vin: string): PlantInfo | undefined {
     let country: string | undefined;
     let city: string | undefined;
     let manufacturer: string | undefined;
@@ -438,11 +417,11 @@ export class VINDecoder {
       // Normalize element name for comparison
       const elementName = pattern.element.toLowerCase();
 
-      if (elementName === "plant country") {
+      if (elementName === 'plant country') {
         country = pattern.value;
-      } else if (elementName === "plant city") {
+      } else if (elementName === 'plant city') {
         city = pattern.value;
-      } else if (elementName === "plant company name") {
+      } else if (elementName === 'plant company name') {
         manufacturer = pattern.value;
       }
     }
@@ -477,26 +456,26 @@ export class VINDecoder {
       if (!pattern.value) continue;
 
       switch (pattern.element) {
-        case "Engine Model":
+        case 'Engine Model':
           info.model = pattern.value;
           hasEngineInfo = true;
           break;
-        case "Engine Number of Cylinders":
-        case "Cylinders":
+        case 'Engine Number of Cylinders':
+        case 'Cylinders':
           info.cylinders = pattern.value;
           hasEngineInfo = true;
           break;
-        case "Displacement (L)":
+        case 'Displacement (L)':
           info.displacement = pattern.value;
           hasEngineInfo = true;
           break;
-        case "Engine Brake (hp) From":
-        case "Engine Power (KW)":
+        case 'Engine Brake (hp) From':
+        case 'Engine Power (KW)':
           info.power = pattern.value;
           hasEngineInfo = true;
           break;
-        case "Fuel Type - Primary":
-        case "Fuel Type":
+        case 'Fuel Type - Primary':
+        case 'Fuel Type':
           info.fuel = pattern.value;
           hasEngineInfo = true;
           break;
@@ -521,34 +500,31 @@ export class VINDecoder {
         code: ErrorCode.INVALID_LENGTH,
         category: ErrorCategory.STRUCTURE,
         severity: ErrorSeverity.ERROR,
-        message: "Invalid VIN length",
+        message: 'Invalid VIN length',
       } as StructureError);
       return errors;
     }
 
     // Check characters
-    const invalidChars = [...vin].reduce(
-      (acc, char, index) => {
-        // Position 9 (check digit) can only be 0-9 or X
-        if (index === 8) {
-          if (!/[0-9X]/.test(char)) {
-            acc.push({ char, pos: index + 1 });
-          }
-        }
-        // Position 10 (year) must be 0-9 or A-Z (except I,O,Q)
-        else if (index === 9) {
-          if (!/[0-9A-HJ-NPR-Z]/.test(char)) {
-            acc.push({ char, pos: index + 1 });
-          }
-        }
-        // All other positions must be 0-9 or A-Z (except I,O,Q)
-        else if (!/[0-9A-HJ-NPR-Z]/.test(char)) {
+    const invalidChars = [...vin].reduce((acc, char, index) => {
+      // Position 9 (check digit) can only be 0-9 or X
+      if (index === 8) {
+        if (!/[0-9X]/.test(char)) {
           acc.push({ char, pos: index + 1 });
         }
-        return acc;
-      },
-      [] as Array<{ char: string; pos: number }>
-    );
+      }
+      // Position 10 (year) must be 0-9 or A-Z (except I,O,Q)
+      else if (index === 9) {
+        if (!/[0-9A-HJ-NPR-Z]/.test(char)) {
+          acc.push({ char, pos: index + 1 });
+        }
+      }
+      // All other positions must be 0-9 or A-Z (except I,O,Q)
+      else if (!/[0-9A-HJ-NPR-Z]/.test(char)) {
+        acc.push({ char, pos: index + 1 });
+      }
+      return acc;
+    }, [] as Array<{ char: string; pos: number }>);
 
     if (invalidChars.length > 0) {
       errors.push({
@@ -556,9 +532,9 @@ export class VINDecoder {
         category: ErrorCategory.STRUCTURE,
         severity: ErrorSeverity.ERROR,
         message: `Invalid characters: ${invalidChars
-          .map((ic) => `${ic.char} at position ${ic.pos}`)
-          .join(", ")}`,
-        positions: invalidChars.map((ic) => ic.pos),
+          .map(ic => `${ic.char} at position ${ic.pos}`)
+          .join(', ')}`,
+        positions: invalidChars.map(ic => ic.pos),
       } as StructureError);
     }
 
@@ -576,7 +552,7 @@ export class VINDecoder {
     const baseWMI = vin.substring(0, 3);
 
     // If position 3 is '9', this is an extended WMI, and part is encoded elsewhere in the VIN
-    if (baseWMI[2] === "9" && vin.length >= 14) {
+    if (baseWMI[2] === '9' && vin.length >= 14) {
       return baseWMI + vin.substring(11, 14);
     }
 
@@ -605,7 +581,7 @@ export class VINDecoder {
     // P-Y: 1993-2009 (skipping O,Q,U)
     for (let i = 0; i < 9; i++) {
       const code = String.fromCharCode(80 + i);
-      if (code !== "Q" && code !== "U") {
+      if (code !== 'Q' && code !== 'U') {
         yearMap.set(code, 1993 + i);
       }
     }
@@ -622,21 +598,21 @@ export class VINDecoder {
     // P-Y: 2023-2039 (skipping O,Q,U)
     for (let i = 0; i < 9; i++) {
       const code = String.fromCharCode(80 + i);
-      if (code === "P") {
+      if (code === 'P') {
         yearMap.set(code, 2023);
-      } else if (code === "R") {
+      } else if (code === 'R') {
         yearMap.set(code, 2024);
-      } else if (code === "S") {
+      } else if (code === 'S') {
         yearMap.set(code, 2025);
-      } else if (code === "T") {
+      } else if (code === 'T') {
         yearMap.set(code, 2026);
-      } else if (code === "V") {
+      } else if (code === 'V') {
         yearMap.set(code, 2027);
-      } else if (code === "W") {
+      } else if (code === 'W') {
         yearMap.set(code, 2028);
-      } else if (code === "X") {
+      } else if (code === 'X') {
         yearMap.set(code, 2029);
-      } else if (code === "Y") {
+      } else if (code === 'Y') {
         yearMap.set(code, 2030);
       }
     }
@@ -660,7 +636,7 @@ export class VINDecoder {
 
     return {
       year: adjustedYear,
-      source: "position",
+      source: 'position',
       confidence: 1,
     };
   }
@@ -684,51 +660,51 @@ export class VINDecoder {
       if (/[A-Z]/.test(char)) {
         // Values according to CFR Title 49 § 565.15(c)
         switch (char) {
-          case "A":
+          case 'A':
             return 1;
-          case "B":
+          case 'B':
             return 2;
-          case "C":
+          case 'C':
             return 3;
-          case "D":
+          case 'D':
             return 4;
-          case "E":
+          case 'E':
             return 5;
-          case "F":
+          case 'F':
             return 6;
-          case "G":
+          case 'G':
             return 7;
-          case "H":
+          case 'H':
             return 8;
-          case "J":
+          case 'J':
             return 1;
-          case "K":
+          case 'K':
             return 2;
-          case "L":
+          case 'L':
             return 3;
-          case "M":
+          case 'M':
             return 4;
-          case "N":
+          case 'N':
             return 5;
-          case "P":
+          case 'P':
             return 7;
-          case "R":
+          case 'R':
             return 9;
-          case "S":
+          case 'S':
             return 2;
-          case "T":
+          case 'T':
             return 3;
-          case "U":
+          case 'U':
             return 4;
-          case "V":
+          case 'V':
             return 5;
-          case "W":
+          case 'W':
             return 6;
-          case "X":
+          case 'X':
             return 7;
-          case "Y":
+          case 'Y':
             return 8;
-          case "Z":
+          case 'Z':
             return 9;
           default:
             return 0;
@@ -739,14 +715,11 @@ export class VINDecoder {
     };
 
     // Calculate weighted sum
-    const sum = [...vin].reduce(
-      (acc, char, idx) => acc + transliterate(char) * weights[idx],
-      0
-    );
+    const sum = [...vin].reduce((acc, char, idx) => acc + transliterate(char) * weights[idx], 0);
 
     // Calculate check digit
     const calculated = sum % 11;
-    const expected = calculated === 10 ? "X" : calculated.toString();
+    const expected = calculated === 10 ? 'X' : calculated.toString();
     const actual = vin[8].toUpperCase();
 
     return {

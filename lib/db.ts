@@ -1,6 +1,6 @@
-import { DatabaseAdapter } from "./db/adapter";
-import { WMIResult } from "./types";
-import { logger } from "./logger";
+import { DatabaseAdapter } from './db/adapter';
+import { WMIResult } from './types';
+import { logger } from './logger';
 
 /**
  * Result from a database query
@@ -19,7 +19,7 @@ export class VPICDatabase {
 
   /**
    * Create a new VPIC database instance
-   * 
+   *
    * @param adapter - The database adapter for the target environment
    */
   constructor(adapter: DatabaseAdapter) {
@@ -28,7 +28,7 @@ export class VPICDatabase {
 
   /**
    * Execute a query and get a single row as an object
-   * 
+   *
    * @param sql - SQL query to execute
    * @param params - Query parameters
    * @returns The first result row as an object, or null if no results
@@ -37,40 +37,40 @@ export class VPICDatabase {
     try {
       // Create a cache key from the query and parameters
       const cacheKey = `${sql}:${JSON.stringify(params)}`;
-      
+
       // Check if we have a cached result
       if (this.queryCache.has(cacheKey)) {
         return this.queryCache.get(cacheKey) as T;
       }
-      
+
       // Execute the query
       const result = await this.adapter.exec(sql, params);
-      
+
       // Transform result to object if we have data
       if (result[0]?.values?.length > 0) {
         const obj: any = {};
         result[0].columns.forEach((col, i) => {
           obj[col] = result[0].values[0][i];
         });
-        
+
         // Cache the result for future queries
         this.queryCache.set(cacheKey, obj);
-        
+
         return obj as T;
       }
-      
+
       // Cache null result
       this.queryCache.set(cacheKey, null);
       return null;
     } catch (error) {
-      logger.error({ error, sql, params }, "Database get error");
+      logger.error({ error, sql, params }, 'Database get error');
       throw error;
     }
   }
 
   /**
    * Execute a query and get multiple rows as objects
-   * 
+   *
    * @param sql - SQL query to execute
    * @param params - Query parameters
    * @returns Array of result rows as objects
@@ -79,15 +79,15 @@ export class VPICDatabase {
     try {
       // Create a cache key from the query and parameters
       const cacheKey = `query:${sql}:${JSON.stringify(params)}`;
-      
+
       // Check if we have a cached result
       if (this.queryCache.has(cacheKey)) {
         return this.queryCache.get(cacheKey) as T[];
       }
-      
+
       // Execute the query
       const result = await this.adapter.exec(sql, params);
-      
+
       // Transform results to objects
       if (result[0]?.values?.length > 0) {
         const objects = result[0].values.map(row => {
@@ -97,19 +97,19 @@ export class VPICDatabase {
           });
           return obj as T;
         });
-        
+
         // Cache the result for future queries
         this.queryCache.set(cacheKey, objects);
-        
+
         return objects;
       }
-      
+
       // Return empty array for no results
       const emptyResult: T[] = [];
       this.queryCache.set(cacheKey, emptyResult);
       return emptyResult;
     } catch (error) {
-      logger.error({ error, sql, params }, "Database query error");
+      logger.error({ error, sql, params }, 'Database query error');
       throw error;
     }
   }
@@ -130,7 +130,7 @@ export class VPICDatabase {
 
   /**
    * Get WMI (World Manufacturer Identifier) information
-   * 
+   *
    * @param wmi - 3-character WMI code
    * @returns WMI information or null if not found
    */
@@ -151,14 +151,7 @@ export class VPICDatabase {
             WHEN c.Name IN ('GERMANY', 'UNITED KINGDOM', 'ITALY', 'FRANCE', 'SWEDEN') THEN 'EUROPE'
             ELSE 'OTHER'
           END as region,
-          ROW_NUMBER() OVER (PARTITION BY w.Wmi ORDER BY 
-            CASE 
-              -- Prioritize RAM for specific WMIs
-              WHEN w.Wmi IN ('1C6', '2C6', '3C6') AND ma.Name = 'RAM' THEN 1
-              -- Then prioritize by creation date
-              ELSE 2
-            END,
-            w.CreatedOn DESC
+          ROW_NUMBER() OVER (PARTITION BY w.Wmi ORDER BY w.CreatedOn DESC
           ) as rn
         FROM Wmi w
         LEFT JOIN Manufacturer m ON w.ManufacturerId = m.Id
@@ -184,12 +177,15 @@ export class VPICDatabase {
 
   /**
    * Get valid VIN schemas for a specific WMI and model year
-   * 
+   *
    * @param wmi - 3-character WMI code
    * @param modelYear - Vehicle model year
    * @returns Array of valid schema IDs and names
    */
-  async getValidSchemas(wmi: string, modelYear: number): Promise<Array<{SchemaId: number, SchemaName: string}>> {
+  async getValidSchemas(
+    wmi: string,
+    modelYear: number,
+  ): Promise<Array<{ SchemaId: number; SchemaName: string }>> {
     const sql = /*sql*/ `
       SELECT DISTINCT vs.Id as SchemaId, vs.Name as SchemaName
       FROM Wmi w
@@ -205,7 +201,7 @@ export class VPICDatabase {
 
   /**
    * Get patterns for a specific set of schemas
-   * 
+   *
    * @param schemaIds - Array of schema IDs
    * @returns Array of pattern definitions
    */
@@ -218,7 +214,7 @@ export class VPICDatabase {
       WITH ValidSchemas AS (
         SELECT vs.Id, vs.Name 
         FROM VinSchema vs 
-        WHERE vs.Id IN (${schemaIds.join(",")})
+        WHERE vs.Id IN (${schemaIds.join(',')})
       )
       SELECT DISTINCT
         p.Keys as Pattern,
@@ -237,7 +233,7 @@ export class VPICDatabase {
       JOIN Element e ON p.ElementId = e.Id
       JOIN ValidSchemas vs ON p.VinSchemaId = vs.Id
       JOIN Wmi_VinSchema wvs ON p.VinSchemaId = wvs.VinSchemaId
-      WHERE p.VinSchemaId IN (${schemaIds.join(",")})
+      WHERE p.VinSchemaId IN (${schemaIds.join(',')})
       
       UNION ALL
       
@@ -261,7 +257,7 @@ export class VPICDatabase {
       JOIN Make_Model mm ON mm.ModelId = CAST(p.AttributeId AS INTEGER)
       JOIN Make m ON m.Id = mm.MakeId
       WHERE e.Name = 'Model'
-      AND p.VinSchemaId IN (${schemaIds.join(",")})
+      AND p.VinSchemaId IN (${schemaIds.join(',')})
     `;
 
     return this.query(sql, []);
@@ -269,7 +265,7 @@ export class VPICDatabase {
 
   /**
    * Look up values in a specific lookup table
-   * 
+   *
    * @param tableName - Name of the lookup table
    * @param ids - Array of ID values to look up
    * @returns Map of ID to name mappings
@@ -280,17 +276,14 @@ export class VPICDatabase {
     }
 
     try {
-      const placeholders = ids.map(() => "?").join(",");
+      const placeholders = ids.map(() => '?').join(',');
       const sql = /*sql*/ `
         SELECT CAST(Id AS TEXT) as Id, Name
         FROM ${tableName}
         WHERE CAST(Id AS TEXT) IN (${placeholders})
       `;
 
-      const results = await this.query<{ Id: string; Name: string }>(
-        sql,
-        [...ids]
-      );
+      const results = await this.query<{ Id: string; Name: string }>(sql, [...ids]);
 
       // Create lookup map for fast access
       const lookupMap = new Map<string, string>();
@@ -300,7 +293,7 @@ export class VPICDatabase {
 
       return lookupMap;
     } catch (error) {
-      logger.warn({ error, tableName, ids }, "Lookup table query failed");
+      logger.warn({ error, tableName, ids }, 'Lookup table query failed');
       return new Map();
     }
   }

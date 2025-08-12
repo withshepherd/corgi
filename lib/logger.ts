@@ -14,13 +14,13 @@ export interface LoggerOptions {
   name?: string;
 }
 
-export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
 // Default configuration
 const DEFAULT_OPTIONS: LoggerOptions = {
-  level: "info",
+  level: 'info',
   enabled: true,
-  name: "app",
+  name: 'app',
 };
 
 // Log level priority (lower number = higher priority)
@@ -35,11 +35,11 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 
 class CoreLogger {
   private options: LoggerOptions;
-  private globalLevel: LogLevel = "info";
+  private globalLevel: LogLevel = 'info';
 
   constructor(options: LoggerOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.globalLevel = this.options.level || "info";
+    this.globalLevel = this.options.level || 'info';
   }
 
   private shouldLog(level: LogLevel): boolean {
@@ -49,14 +49,14 @@ class CoreLogger {
 
   private formatMessage(
     level: LogLevel,
-    component: string = "",
-    message: string = "",
-    obj?: unknown
+    component: string = '',
+    message: string = '',
+    obj?: unknown,
   ): string {
     const timestamp = new Date().toISOString();
-    const prefix = component ? `[${component}]` : "";
+    const prefix = component ? `[${component}]` : '';
 
-    if (obj && typeof obj === "object") {
+    if (obj && typeof obj === 'object') {
       try {
         const objStr = JSON.stringify(obj);
         return `${timestamp} ${level.toUpperCase()} ${prefix} ${message} ${objStr}`;
@@ -65,51 +65,45 @@ class CoreLogger {
       }
     }
 
-    return `${timestamp} ${level.toUpperCase()} ${prefix} ${message} ${obj !== undefined ? obj : ""}`;
+    return `${timestamp} ${level.toUpperCase()} ${prefix} ${message} ${
+      obj !== undefined ? obj : ''
+    }`;
   }
 
   // Log methods
-  trace(obj: unknown, message: string = ""): void {
-    if (this.shouldLog("trace")) {
-      console.debug(
-        this.formatMessage("trace", this.options.name, message, obj)
-      );
+  trace(obj: unknown, message: string = ''): void {
+    if (this.shouldLog('trace')) {
+      console.debug(this.formatMessage('trace', this.options.name, message, obj));
     }
   }
 
-  debug(obj: unknown, message: string = ""): void {
-    if (this.shouldLog("debug")) {
-      console.debug(
-        this.formatMessage("debug", this.options.name, message, obj)
-      );
+  debug(obj: unknown, message: string = ''): void {
+    if (this.shouldLog('debug')) {
+      console.debug(this.formatMessage('debug', this.options.name, message, obj));
     }
   }
 
-  info(obj: unknown, message: string = ""): void {
-    if (this.shouldLog("info")) {
-      console.log(this.formatMessage("info", this.options.name, message, obj));
+  info(obj: unknown, message: string = ''): void {
+    if (this.shouldLog('info')) {
+      console.log(this.formatMessage('info', this.options.name, message, obj));
     }
   }
 
-  warn(obj: unknown, message: string = ""): void {
-    if (this.shouldLog("warn")) {
-      console.warn(this.formatMessage("warn", this.options.name, message, obj));
+  warn(obj: unknown, message: string = ''): void {
+    if (this.shouldLog('warn')) {
+      console.warn(this.formatMessage('warn', this.options.name, message, obj));
     }
   }
 
-  error(obj: unknown, message: string = ""): void {
-    if (this.shouldLog("error")) {
-      console.error(
-        this.formatMessage("error", this.options.name, message, obj)
-      );
+  error(obj: unknown, message: string = ''): void {
+    if (this.shouldLog('error')) {
+      console.error(this.formatMessage('error', this.options.name, message, obj));
     }
   }
 
-  fatal(obj: unknown, message: string = ""): void {
-    if (this.shouldLog("fatal")) {
-      console.error(
-        this.formatMessage("fatal", this.options.name, message, obj)
-      );
+  fatal(obj: unknown, message: string = ''): void {
+    if (this.shouldLog('fatal')) {
+      console.error(this.formatMessage('fatal', this.options.name, message, obj));
     }
   }
 
@@ -130,14 +124,14 @@ class CoreLogger {
     };
 
     // Enhance log methods to include metadata
-    Object.keys(originalMethods).forEach((method) => {
+    Object.keys(originalMethods).forEach(method => {
       const logMethod = method as keyof typeof originalMethods;
-      childLogger[logMethod] = (obj: unknown, message: string = "") => {
+      childLogger[logMethod] = (obj: unknown, message: string = '') => {
         originalMethods[logMethod](
-          typeof obj === "object" && obj !== null
+          typeof obj === 'object' && obj !== null
             ? { ...meta, ...(obj as object) }
             : { ...meta, value: obj },
-          message
+          message,
         );
       };
     });
@@ -155,17 +149,14 @@ class CoreLogger {
 export const logger = new CoreLogger();
 
 // Create a child logger with component context
-export function createLogger(
-  component: string,
-  meta: Record<string, any> = {}
-): Logger {
+export function createLogger(component: string, meta: Record<string, any> = {}): Logger {
   return logger.child(component, meta);
 }
 
 // Convenience function to create traceable request loggers with request ID
 export function createRequestLogger(
   component: string,
-  requestId: string = Math.random().toString(36).substring(2, 15)
+  requestId: string = Math.random().toString(36).substring(2, 15),
 ): Logger & { requestId: string } {
   const reqLogger = logger.child(component, { requestId }) as Logger & {
     requestId: string;

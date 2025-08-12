@@ -1,16 +1,45 @@
-import type { DatabaseAdapter } from "./db/adapter";
-import { VPICDatabase } from "./db";
-import { PatternMatch } from "./types";
-import { createLogger } from "./logger";
+import type { DatabaseAdapter } from './db/adapter';
+import { VPICDatabase } from './db';
+import { PatternMatch } from './types';
+import { createLogger } from './logger';
 
-const logger = createLogger("PatternMatcher");
+const logger = createLogger('PatternMatcher');
+
+/** Valid lookup tables in the VPIC database */
+const LOOKUP_TABLES = [
+  'DriveType',
+  'EngineModel',
+  'EngineConfiguration',
+  'FuelType',
+  'Transmission',
+  'BodyStyle',
+  'GrossVehicleWeightRating',
+  'ChargerLevel',
+  'ElectrificationLevel',
+  'EVDriveUnit',
+  'BatteryType',
+  'Make',
+  'Model',
+  'Series',
+  'Trim',
+  'Turbo',
+  'DaytimeRunningLight',
+  'Plant',
+  'Country',
+  'DaytimeRunningLight',
+  'DestinationMarket',
+  'Conversion',
+] as const;
 
 /**
  * Pattern position information
  */
 interface Position {
+  /** Start position of the pattern (0-indexed) */
   start: number;
+  /** Length of the pattern (number of characters) */
   length: number;
+  /** Value of the pattern (characters) */
   value: string;
 }
 
@@ -18,23 +47,41 @@ interface Position {
  * Raw pattern match from database
  */
 interface RawPatternMatch {
+  /** Pattern string (e.g. "****|*U") */
   pattern: string;
+  /** Element ID */
   elementId: number;
+  /** Element name (e.g. "Model") */
   elementName: string;
+  /** Element (e.g. "Model") */
   element: string;
+  /** Element code (e.g. "123") */
   elementCode: string;
+  /** Group name (e.g. "Model") */
   groupName?: string;
+  /** Description (e.g. "Model") */
   description?: string;
+  /** Lookup table (e.g. "Model") */
   lookupTable?: string;
+  /** Attribute ID (e.g. "123") */
   attributeId: string | number | null;
+  /** Value (e.g. "123") */
   value: string | null;
+  /** Schema name (e.g. "Model") */
   schemaName: string;
+  /** Year from (e.g. 2020) */
   yearFrom: number;
+  /** Year to (e.g. 2020) */
   yearTo?: number;
+  /** Confidence (e.g. 0.5) */
   confidence: number;
+  /** Keys (e.g. "123") */
   keys: string;
+  /** Element weight (e.g. 0.5) */
   elementWeight?: number;
-  patternType?: "VDS" | "VIS";
+  /** Pattern type (e.g. "VDS" | "VIS") */
+  patternType?: 'VDS' | 'VIS';
+  /** Positions (e.g. [0, 1, 2, 3]) */
   positions: number[];
 }
 
@@ -68,10 +115,7 @@ export class PatternMatcher {
       let length = 1;
 
       // Count consecutive occurrences of the same character
-      while (
-        currentPos + length < pattern.length &&
-        pattern[currentPos + length] === value
-      ) {
+      while (currentPos + length < pattern.length && pattern[currentPos + length] === value) {
         length++;
       }
 
@@ -96,8 +140,8 @@ export class PatternMatcher {
    */
   private isCharInRange(char: string, pattern: string): boolean {
     // Handle character class patterns like [A-E], [1-46], [ABCE]
-    if (!pattern.startsWith("[") || !pattern.endsWith("]")) {
-      return char === pattern || pattern === "*";
+    if (!pattern.startsWith('[') || !pattern.endsWith(']')) {
+      return char === pattern || pattern === '*';
     }
 
     const content = pattern.slice(1, -1);
@@ -105,7 +149,7 @@ export class PatternMatcher {
 
     while (i < content.length) {
       // Handle ranges like A-E
-      if (i + 2 < content.length && content[i + 1] === "-") {
+      if (i + 2 < content.length && content[i + 1] === '-') {
         const start = content[i].charCodeAt(0);
         const end = content[i + 2].charCodeAt(0);
         const charCode = char.charCodeAt(0);
@@ -141,7 +185,7 @@ export class PatternMatcher {
     }
 
     // Split pattern into parts
-    const [actualPattern, ...metadataParts] = pattern.split("|");
+    const [actualPattern, ...metadataParts] = pattern.split('|');
 
     // Special handling for VIS patterns with pipe separator (e.g. *****|*U)
     if (metadataParts.length > 0 && actualPattern.length === 5) {
@@ -152,7 +196,7 @@ export class PatternMatcher {
       const plantCodeChar = input[0]; // First char of input (which should be VIS portion)
       const expectedPlantCode = visPattern[1]; // Second char after *
 
-      return expectedPlantCode === "*" || plantCodeChar === expectedPlantCode;
+      return expectedPlantCode === '*' || plantCodeChar === expectedPlantCode;
     }
 
     return this.matchesSimplePattern(input, actualPattern);
@@ -174,8 +218,8 @@ export class PatternMatcher {
       const inputChar = input[inputIndex];
 
       // Handle character class patterns
-      if (patternChar === "[") {
-        const closeBracket = pattern.indexOf("]", patternIndex);
+      if (patternChar === '[') {
+        const closeBracket = pattern.indexOf(']', patternIndex);
         if (closeBracket === -1) {
           return false;
         }
@@ -191,7 +235,7 @@ export class PatternMatcher {
       }
 
       // Handle wildcards - they can match any character
-      if (patternChar === "*") {
+      if (patternChar === '*') {
         // If this is the last character in the pattern, consume all remaining input
         if (patternIndex === pattern.length - 1) {
           return true;
@@ -215,7 +259,7 @@ export class PatternMatcher {
     // or if the only remaining pattern character is a wildcard
     return (
       patternIndex >= pattern.length ||
-      (patternIndex === pattern.length - 1 && pattern[patternIndex] === "*")
+      (patternIndex === pattern.length - 1 && pattern[patternIndex] === '*')
     );
   }
 
@@ -230,7 +274,7 @@ export class PatternMatcher {
     if (!pattern || !input) return 0;
 
     // Split pattern into parts
-    const [actualPattern, ...metadataParts] = pattern.split("|");
+    const [actualPattern, ...metadataParts] = pattern.split('|');
 
     // Special handling for VIS patterns
     if (metadataParts.length > 0 && actualPattern.length === 5) {
@@ -239,7 +283,7 @@ export class PatternMatcher {
       const expectedPlantCode = visPattern[1];
 
       // For plant codes, we want to be more lenient
-      if (expectedPlantCode === "*") {
+      if (expectedPlantCode === '*') {
         return 0.8; // Higher confidence for wildcard matches
       }
 
@@ -268,18 +312,15 @@ export class PatternMatcher {
       const patternChar = actualPattern[patternIndex];
       const inputChar = input[inputIndex];
 
-      if (patternChar === "[") {
-        const closeBracket = actualPattern.indexOf("]", patternIndex);
+      if (patternChar === '[') {
+        const closeBracket = actualPattern.indexOf(']', patternIndex);
         if (closeBracket === -1) break;
 
-        const charClass = actualPattern.substring(
-          patternIndex,
-          closeBracket + 1
-        );
+        const charClass = actualPattern.substring(patternIndex, closeBracket + 1);
         const content = charClass.slice(1, -1);
 
         // More specific character classes get higher confidence
-        if (content.includes("-")) {
+        if (content.includes('-')) {
           // Range like [1-5] is less specific
           classMatches += 0.7;
         } else {
@@ -290,7 +331,7 @@ export class PatternMatcher {
         totalLength++;
         patternIndex = closeBracket + 1;
         inputIndex++;
-      } else if (patternChar === "*") {
+      } else if (patternChar === '*') {
         wildcardMatches++;
         totalLength++;
         patternIndex++;
@@ -307,8 +348,7 @@ export class PatternMatcher {
     }
 
     // Weight the different types of matches
-    const score =
-      (exactMatches * 1.0 + classMatches + wildcardMatches * 0.5) / totalLength;
+    const score = (exactMatches * 1.0 + classMatches + wildcardMatches * 0.5) / totalLength;
 
     return Math.min(1, Math.max(0, score));
   }
@@ -354,31 +394,26 @@ export class PatternMatcher {
     wmi: string,
     modelYear: number,
     vds: string,
-    vis: string
+    vis: string,
   ): Promise<PatternMatch[]> {
     // Get raw pattern matches first
-    const rawMatches = await this.getRawPatternMatches(
-      wmi,
-      modelYear,
-      vds,
-      vis
-    );
+    const rawMatches = await this.getRawPatternMatches(wmi, modelYear, vds, vis);
 
     // Transform matches into the cleaner format and filter by confidence
     const transformedMatches = rawMatches
-      .filter((m) => {
+      .filter(m => {
         // More lenient confidence threshold for plant codes
-        if (m.elementName.toLowerCase().includes("plant")) {
+        if (m.elementName.toLowerCase().includes('plant')) {
           return m.confidence > 0.3;
         }
         return m.confidence > 0.5;
       })
-      .map((match) => this.transformPatternMatch(match));
+      .map(match => this.transformPatternMatch(match));
 
     // Group matches by element type
     const matchesByElement: Record<string, PatternMatch[]> = {};
 
-    transformedMatches.forEach((match) => {
+    transformedMatches.forEach(match => {
       const element = match.element;
       if (!matchesByElement[element]) {
         matchesByElement[element] = [];
@@ -402,10 +437,10 @@ export class PatternMatcher {
 
       // Filter out duplicates based on value and positions
       const seen = new Set<string>();
-      const uniqueMatches = sortedMatches.filter((match) => {
+      const uniqueMatches = sortedMatches.filter(match => {
         const key = JSON.stringify({
           value: match.value,
-          positions: match.positions.join(","),
+          positions: match.positions.join(','),
           schema: match.schema,
         });
 
@@ -436,49 +471,27 @@ export class PatternMatcher {
     wmi: string,
     modelYear: number,
     vds: string,
-    vis: string
+    vis: string,
   ): Promise<RawPatternMatch[]> {
     try {
       // 1. Find valid schemas
       const validSchemas = await this.db.getValidSchemas(wmi, modelYear);
 
       if (validSchemas.length === 0) {
-        logger.debug({ wmi, modelYear }, "No valid schemas found");
+        logger.debug({ wmi, modelYear }, 'No valid schemas found');
         return [];
       }
 
-      const schemaIds = validSchemas.map((s) => s.SchemaId);
+      const schemaIds = validSchemas.map(s => s.SchemaId);
 
       // 2. Get all patterns for these schemas
       const allPatterns = await this.db.getPatterns(schemaIds);
 
-      // 3. Filter patterns to reduce the number we need to process
-      const allowedTables = [
-        "DriveType",
-        "EngineModel",
-        "EngineConfiguration",
-        "FuelType",
-        "ChargerLevel",
-        "Conversion",
-        "BodyStyle",
-        "Transmission",
-        "Make",
-        "Model",
-        "Series",
-        "Trim",
-        "Turbo",
-        "Country",
-        "DestinationMarket",
-        "Plant",
-        "DaytimeRunningLight",
-      ];
+      // 3. Filter patterns using valid lookup tables
 
-      const filteredPatterns = allPatterns.filter((p) => {
+      const filteredPatterns = allPatterns.filter(p => {
         if (p.LookupTable) {
-          if (
-            !allowedTables.includes(p.LookupTable) ||
-            p.LookupTable.includes("vNCSA")
-          ) {
+          if (!LOOKUP_TABLES.includes(p.LookupTable) || p.LookupTable.includes('vNCSA')) {
             return false;
           }
         }
@@ -513,13 +526,9 @@ export class PatternMatcher {
       }
 
       // 5. Resolve lookup values in batch by table
-      for (const [tableName, tablePatterns] of Object.entries(
-        patternsByLookupTable
-      )) {
+      for (const [tableName, tablePatterns] of Object.entries(patternsByLookupTable)) {
         // Extract unique attribute IDs
-        const attributeIds = [
-          ...new Set(tablePatterns.map((p) => String(p.AttributeId))),
-        ];
+        const attributeIds = [...new Set(tablePatterns.map(p => String(p.AttributeId)))];
 
         if (attributeIds.length === 0) continue;
 
@@ -530,11 +539,10 @@ export class PatternMatcher {
           // Apply resolved values to patterns
           for (const pattern of tablePatterns) {
             const attributeId = String(pattern.AttributeId);
-            pattern.ResolvedValue =
-              lookupMap.get(attributeId) || pattern.AttributeId;
+            pattern.ResolvedValue = lookupMap.get(attributeId) || pattern.AttributeId;
           }
         } catch (error) {
-          logger.warn({ error, tableName }, "Lookup table resolution failed");
+          logger.warn({ error, tableName }, 'Lookup table resolution failed');
 
           // If table doesn't exist or other error, use AttributeId as fallback
           for (const pattern of tablePatterns) {
@@ -559,21 +567,20 @@ export class PatternMatcher {
 
       // 8. Find the most specific schema by looking at model patterns
       const modelPatterns = resolvedPatterns
-        .filter((row) => row.ElementName === "Model")
-        .map((row) => ({
+        .filter(row => row.ElementName === 'Model')
+        .map(row => ({
           ...row,
           confidence: this.calculateConfidence(row.Pattern, vds + vis),
         }))
         .sort((a, b) => b.confidence - a.confidence);
 
       // Get the most relevant schema name
-      const primarySchema =
-        modelPatterns.length > 0 ? modelPatterns[0].SchemaName : null;
+      const primarySchema = modelPatterns.length > 0 ? modelPatterns[0].SchemaName : null;
 
       // 9. Calculate confidence and format results
-      return resolvedPatterns.map((row) => {
+      return resolvedPatterns.map(row => {
         const pattern = row.Pattern;
-        const isVISPattern = pattern.includes("|");
+        const isVISPattern = pattern.includes('|');
 
         // Calculate base confidence
         const baseConfidence = isVISPattern
@@ -582,7 +589,7 @@ export class PatternMatcher {
 
         // Adjust confidence based on schema match for plant codes
         let confidence = baseConfidence;
-        if (row.ElementName.toLowerCase().includes("plant")) {
+        if (row.ElementName.toLowerCase().includes('plant')) {
           if (primarySchema) {
             confidence = row.SchemaName === primarySchema ? baseConfidence : 0;
           } else {
@@ -592,11 +599,11 @@ export class PatternMatcher {
 
         // Calculate correct positions based on pattern type
         const positions: number[] = [];
-        const actualPattern = pattern.split("|")[0];
-        let startPos = isVISPattern ? 9 : 3;
+        const actualPattern = pattern.split('|')[0];
+        const startPos = isVISPattern ? 9 : 3;
 
         for (let i = 0; i < actualPattern.length; i++) {
-          if (actualPattern[i] !== "|") {
+          if (actualPattern[i] !== '|') {
             positions.push(startPos + i);
           }
         }
@@ -618,12 +625,12 @@ export class PatternMatcher {
           confidence,
           keys: row.Pattern,
           elementWeight: row.ElementWeight,
-          patternType: isVISPattern ? "VIS" : "VDS",
+          patternType: isVISPattern ? 'VIS' : 'VDS',
           positions,
         } as RawPatternMatch;
       });
     } catch (error) {
-      logger.error({ error, wmi, modelYear }, "Error getting pattern matches");
+      logger.error({ error, wmi, modelYear }, 'Error getting pattern matches');
       throw error;
     }
   }
