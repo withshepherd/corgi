@@ -316,6 +316,9 @@ export interface VehicleInfo {
   /** Number of doors */
   doors?: string;
 
+  /** Gross Vehicle Weight Rating */
+  gvwr?: string;
+
   /** Vehicle manufacturer name */
   manufacturer?: string;
 }
