@@ -295,7 +295,6 @@ export class VINDecoder {
     if (bodyStyle in BODY_STYLE_MAP) {
       return BODY_STYLE_MAP[bodyStyle];
     }
-    console.log('bodyStyle', bodyStyle);
 
     // Fuzzy match based on substring
     for (const [key, value] of Object.entries(BODY_STYLE_MAP)) {

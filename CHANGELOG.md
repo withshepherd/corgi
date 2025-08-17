@@ -1,5 +1,11 @@
 # @cardog/corgi
 
+## 1.2.1
+
+### Patch Changes
+
+- Fixed issue with JSON output in CLI
+
 ## 1.2.0
 
 ### Minor Changes
