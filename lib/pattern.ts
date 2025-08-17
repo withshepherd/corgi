@@ -488,7 +488,6 @@ export class PatternMatcher {
 
       // 2. Get all patterns for these schemas
       const allPatterns = await this.db.getPatterns(schemaIds);
-
       // 3. Filter patterns using valid lookup tables
 
       const filteredPatterns = allPatterns.filter(p => {

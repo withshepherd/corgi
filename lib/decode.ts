@@ -334,6 +334,7 @@ export class VINDecoder {
       model: '',
       year: modelYear.year,
       manufacturer: wmiInfo.manufacturer,
+      gvwr: '',
     };
 
     // First, sort model patterns by elementWeight (if available)
@@ -391,6 +392,8 @@ export class VINDecoder {
         case 'Doors':
           info.doors = pattern.value;
           break;
+        case 'Gross Vehicle Weight Rating From':
+          info.gvwr = pattern.value;
       }
     }
 
